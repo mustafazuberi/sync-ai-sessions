@@ -50,16 +50,25 @@ Destination:
 ~/.claude/projects/<encoded-device-b-path>/
 ```
 
-## Behavior To Build
+## Current Behavior
 
 ```text
 1. send detects the current repo remote origin.
 2. send stores source metadata inside encrypted payload.
 3. receive reads encrypted metadata after decrypting.
-4. receive searches Device B for a repo with the same normalized remote origin.
-5. if found, import sessions into Device B's Claude project folder for that repo.
-6. if not found, import sessions into archive/global fallback.
-7. never overwrite existing Device B session files.
+4. receive uses --cwd first if provided.
+5. receive checks current folder for matching remote.
+6. receive searches common local repo folders for matching remote.
+7. if found, import sessions into Device B's Claude project folder for that repo.
+8. if not found, stop and tell user to clone repo or rerun with --cwd.
+9. never overwrite existing Device B session files.
+```
+
+Important:
+
+```text
+send is repo-based in v1.
+It does not send every Claude session on the machine.
 ```
 
 ## Expected UX
@@ -83,8 +92,7 @@ If no matching repo exists:
 
 ```text
 No matching local repo was found.
-Sessions were saved in archive.
-Clone the repo, then rerun receive with --cwd to attach them.
+Clone the repo, then rerun receive with --cwd.
 ```
 
 ## Safety Rule

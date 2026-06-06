@@ -20,7 +20,7 @@
     "node": ">=20"
   },
   "devDependencies": {
-    "@types/node": "^20.12.12",
+    "@types/node": "^20.19.42",
     "typescript": "^5.4.5"
   }
 }

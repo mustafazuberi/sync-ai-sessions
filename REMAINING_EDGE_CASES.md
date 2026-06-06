@@ -5,25 +5,16 @@ These are known cases we are not fully handling yet.
 ## Repo Matching
 
 ```text
-No origin remote:
-Need to check all git remotes, not only origin.
-
 Fork vs upstream:
 Exact remote match may fail if Device A uses fork and Device B uses upstream.
 
 Multiple matching repos:
-Need interactive picker, or fail with --cwd suggestion in non-interactive mode.
-
-Repo missing on Device B:
-Need archive/global fallback.
+Currently fails with --cwd suggestion. Later we may add interactive picker.
 ```
 
 ## Import Safety
 
 ```text
-Same Gist received twice:
-Need conflict-safe imported filenames.
-
 Partial import failure:
 Need temp staging before writing final files.
 
@@ -60,9 +51,6 @@ Need clear "handoff not found" message.
 ## Platform
 
 ```text
-Windows/macOS/Linux path differences:
-Need path normalization before encoding Claude project path.
-
 Claude storage changes:
 Need doctor and CLAUDESYNC_SESSION_DIR override to remain reliable.
 ```

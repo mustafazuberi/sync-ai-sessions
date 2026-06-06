@@ -2,11 +2,11 @@
 
 Move Claude Code sessions from one device to another with an encrypted GitHub Gist handoff.
 
-Claude Context Sync packages your local Claude Code session files, encrypts them on your machine, uploads the encrypted payload to a private Gist in your GitHub account, and imports it on another device without deleting existing Claude sessions.
+Claude Context Sync packages the Claude Code session files for the current git repo, encrypts them on your machine, uploads the encrypted payload to a private Gist in your GitHub account, and imports them on another device without deleting existing Claude sessions.
 
 ## Why
 
-Claude Code stores session history locally. When you switch computers, the new machine usually cannot continue the same local session. Claude Context Sync gives you a simple handoff flow:
+Claude Code stores session history locally. When you switch computers, the new machine usually cannot continue the same project session. Claude Context Sync gives you a simple repo handoff flow:
 
 ```bash
 # Device A
@@ -44,10 +44,11 @@ You will create a passphrase. Use the same passphrase when receiving the handoff
 ## Send From Device A
 
 ```bash
+cd my-app
 npx claude-context-sync@latest send
 ```
 
-Claude Context Sync creates a new private Gist and prints something like:
+Run this from inside the git repo you want to move. Claude Context Sync creates a new private Gist and prints something like:
 
 ```text
 Sent Claude handoff
@@ -71,6 +72,10 @@ npx claude-context-sync@latest receive --gist <gistId>
 Enter the same passphrase used on Device A.
 
 Claude Context Sync imports the pulled sessions into the local Claude session directory. Existing sessions are preserved. If a file already exists, the imported copy is renamed with an `-imported-<hash>` suffix.
+
+Claude Context Sync matches repos by Git remote URL, not local folder path. If Device A uses `C:\work\my-app` and Device B uses `/Users/you/dev/my-app`, the sessions still attach correctly when both folders point to the same GitHub repo.
+
+If no matching repo is found, Claude Context Sync stops and explains how to clone the repo or pass `--cwd`. It does not attach sessions to the wrong project.
 
 ## Where Sessions Are Read From
 
@@ -142,9 +147,10 @@ Then retry the Claude Context Sync command.
 
 ### No Claude sessions found
 
-Open Claude Code once in the project you want to move, then rerun:
+Open Claude Code once in the git repo you want to move, then rerun:
 
 ```bash
+cd /path/to/repo
 npx claude-context-sync@latest send
 ```
 
@@ -158,6 +164,16 @@ Run:
 
 ```bash
 npx claude-context-sync@latest doctor
+```
+
+### No matching repo found
+
+This means Claude Context Sync could not find a local repo with the same Git remote as the handoff.
+
+Clone the repo, then rerun receive with an explicit target:
+
+```bash
+npx claude-context-sync@latest receive --gist <gistId> --cwd /path/to/repo
 ```
 
 ## Development

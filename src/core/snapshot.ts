@@ -16,26 +16,37 @@ export type SnapshotFile = {
 };
 
 export type Snapshot = {
-  v: 1;
+  v: 2;
   createdAt: string;
   sourceDir: string;
+  metadata: SnapshotMetadata;
   files: SnapshotFile[];
 };
 
-export async function createSnapshot(sessionDir: string): Promise<Buffer> {
-  if (!existsSync(sessionDir)) {
-    throw new FriendlyError("Claude session directory was not found.", `Check: ${sessionDir}`);
+export type SnapshotMetadata = {
+  sourceCwd: string;
+  sourceClaudeProjectDir: string;
+  projectName: string;
+  gitRemoteOrigin?: string;
+  normalizedGitRemoteOrigin?: string;
+  gitBranch?: string;
+};
+
+export async function createSnapshot(projectSessionDir: string, metadata: SnapshotMetadata): Promise<Buffer> {
+  if (!existsSync(projectSessionDir)) {
+    throw new FriendlyError("No Claude sessions found for this project.", `Check: ${projectSessionDir}`);
   }
 
-  const files = await collectFiles(sessionDir, sessionDir);
+  const files = await collectFiles(projectSessionDir, projectSessionDir);
   if (files.length === 0) {
     throw new FriendlyError("No Claude session files found.", "Open Claude Code once, then rerun send.");
   }
 
   const snapshot: Snapshot = {
-    v: 1,
+    v: 2,
     createdAt: new Date().toISOString(),
-    sourceDir: sessionDir,
+    sourceDir: projectSessionDir,
+    metadata,
     files,
   };
 

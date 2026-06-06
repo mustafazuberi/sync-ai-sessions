@@ -4,6 +4,7 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { mkdir } from "node:fs/promises";
 import { getFlag, type CliArgs } from "./args.js";
+import { FriendlyError } from "./errors.js";
 
 export type ResolvedPaths = {
   homeDir: string;
@@ -17,8 +18,12 @@ export type ResolvedPaths = {
 export async function resolvePaths(args: CliArgs): Promise<ResolvedPaths> {
   const homeDir = path.join(os.homedir(), ".claude-context-sync");
   const cwd = path.resolve(getFlag(args, "cwd") ?? process.cwd());
-  await mkdir(homeDir, { recursive: true });
-  await mkdir(path.join(homeDir, "backups"), { recursive: true });
+  try {
+    await mkdir(homeDir, { recursive: true });
+    await mkdir(path.join(homeDir, "backups"), { recursive: true });
+  } catch {
+    throw new FriendlyError(`Cannot write Claude Context Sync config at ${homeDir}.`, "Check folder permissions and rerun.");
+  }
   const session = await resolveSessionDir(path.join(homeDir, "config.json"));
 
   return {
