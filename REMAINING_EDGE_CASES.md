@@ -1,56 +1,70 @@
 # Remaining Edge Cases
 
-These are known cases we are not fully handling yet.
+These are the important cases not fully handled yet.
 
 ## Repo Matching
 
 ```text
 Fork vs upstream:
-Exact remote match may fail if Device A uses fork and Device B uses upstream.
-
-Multiple matching repos:
-Currently fails with --cwd suggestion. Later we may add interactive picker.
+Device A may use a fork remote, while Device B uses the upstream remote.
+Current behavior: exact remote match only.
+Needed: allow user to attach with --cwd after showing a clear mismatch message.
 ```
 
 ## Import Safety
 
 ```text
 Partial import failure:
-Need temp staging before writing final files.
+Current behavior: writes files during import.
+Needed: stage files in temp first, then move into final location after validation.
 
 Claude Code running:
-Need warning or --force behavior before modifying session files.
+Current behavior: receive does not warn.
+Needed: warn user to close Claude Code before modifying session files.
 ```
 
 ## Session Data
 
 ```text
-Absolute paths inside JSONL:
-Need to decide whether to preserve or rewrite. Recommendation for v1: preserve.
-
 Different branch:
-Need to show source branch, but still import.
+Current behavior: branch is stored but not shown.
+Needed: show source branch in receive output when available.
 
 Huge handoff:
-Need size check before uploading to Gist.
+Current behavior: no size check before Gist upload.
+Needed: check payload size and fail with a clear message if too large.
 ```
 
 ## GitHub
 
 ```text
-Missing Gist permission:
-Need exact fix: gh auth refresh -s gist
-
 Wrong GitHub account:
-Need clear error if Device B cannot access the private Gist.
+Current behavior: access failure is generic.
+Needed: say this GitHub account cannot access the Gist.
 
 Deleted Gist:
-Need clear "handoff not found" message.
+Current behavior: not found looks like a generic read failure.
+Needed: say handoff not found or deleted.
 ```
 
-## Platform
+## Already Handled
 
 ```text
-Claude storage changes:
-Need doctor and CLAUDESYNC_SESSION_DIR override to remain reliable.
+Remote not named origin:
+Handled. We check all git remote URLs, not only origin.
+
+Repo paths differ across devices:
+Handled. We match by normalized Git remote URL.
+
+Multiple matching repos:
+Handled safely. We stop and suggest --cwd.
+
+Repo missing on Device B:
+Handled safely. We stop and tell user to clone repo or use --cwd.
+
+Same Gist received twice:
+Handled. Existing files are not overwritten; imported copies get a suffix.
+
+Claude storage path override:
+Handled. CLAUDESYNC_SESSION_DIR and doctor exist.
 ```

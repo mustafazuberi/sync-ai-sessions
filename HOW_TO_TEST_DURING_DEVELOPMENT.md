@@ -1,15 +1,15 @@
 # How To Test During Development
 
-Follow these steps while building the package locally.
+Use this file when testing the local package before publishing.
 
-## 1. Build The Local CLI
+## 1. Build
 
 ```bash
 npm.cmd install
 npm.cmd run build
 ```
 
-## 2. Check The CLI Opens
+## 2. Check CLI
 
 ```bash
 node bin/claudesync.js --help
@@ -21,9 +21,7 @@ Expected:
 Claude Context Sync
 ```
 
-## 3. Authenticate GitHub
-
-Claude Context Sync creates private Gists in your GitHub account.
+## 3. GitHub Auth
 
 ```bash
 gh auth login
@@ -31,18 +29,15 @@ gh auth refresh -s gist
 gh auth status
 ```
 
-## 4. Test With A Real Repo
+## 4. Send From Current Repo
 
-Go to a git repo that has been used with Claude Code.
+Run from inside the repo you want to test.
 
-```bash
-cd C:\path\to\your-repo
-```
-
-Run local `send`:
+For this package repo:
 
 ```bash
-node C:\Users\DELL\Desktop\side-projects\claude-context-sync\bin\claudesync.js send
+cd ~/Desktop/side-projects/claude-context-sync
+node bin/claudesync.js send
 ```
 
 Enter a passphrase.
@@ -52,23 +47,17 @@ Expected:
 ```text
 Sent Claude handoff
 Gist: <gistId>
-Repo: github.com/owner/repo
+Repo: github.com/<owner>/<repo>
 ```
 
-Keep the printed Gist ID.
+Keep the Gist ID.
 
-## 5. Test Receive
+## 5. Receive On Same Device
 
-Go to the same repo on this machine or another machine.
-
-```bash
-cd C:\path\to\same-repo
-```
-
-Run:
+Run from the same repo:
 
 ```bash
-node C:\Users\DELL\Desktop\side-projects\claude-context-sync\bin\claudesync.js receive --gist <gistId>
+node bin/claudesync.js receive --gist <gistId>
 ```
 
 Enter the same passphrase.
@@ -78,60 +67,77 @@ Expected:
 ```text
 Received Claude handoff
 Imported: ...
-Destination: C:\path\to\same-repo
+Destination: <this repo path>
 ```
 
-## 6. Test Receive From Any Folder
+This proves:
 
-You can receive from a random folder if the repo exists somewhere on this device.
+```text
+Gist download works.
+Passphrase decrypt works.
+Repo remote matching works.
+Session import works.
+```
+
+## 6. Test Fresh Restore Locally
+
+Use this only if you are okay clearing local Claude sessions.
+
+Close Claude Code first.
+
+Backup real sessions:
 
 ```bash
-cd C:\
-node C:\Users\DELL\Desktop\side-projects\claude-context-sync\bin\claudesync.js receive --gist <gistId>
+cp -r ~/.claude/projects ~/.claude/projects.backup
 ```
 
-Claude Context Sync should search common folders and attach sessions to the matching repo.
-
-If it cannot find the repo, use `--cwd`:
+Delete current sessions:
 
 ```bash
-node C:\Users\DELL\Desktop\side-projects\claude-context-sync\bin\claudesync.js receive --gist <gistId> --cwd C:\path\to\same-repo
+rm -rf ~/.claude/projects
 ```
 
-## 7. Safe Fake Session Testing
-
-Use this if you do not want to touch real Claude sessions.
-
-Set a fake Claude session root:
-
-```powershell
-$env:CLAUDESYNC_SESSION_DIR="C:\temp\fake-claude-projects"
-```
-
-Then run `send` from a real git repo:
+Receive again:
 
 ```bash
-cd C:\path\to\your-repo
-node C:\Users\DELL\Desktop\side-projects\claude-context-sync\bin\claudesync.js send
+node bin/claudesync.js receive --gist <gistId>
 ```
 
-If it says no Claude sessions were found, create the expected fake project folder and add a fake session file.
-
-Rerun:
+Check restored files:
 
 ```bash
-node C:\Users\DELL\Desktop\side-projects\claude-context-sync\bin\claudesync.js send
+find ~/.claude/projects -type f
 ```
 
-Clear the fake override when done:
+Restore backup if needed:
 
-```powershell
-Remove-Item Env:\CLAUDESYNC_SESSION_DIR
+```bash
+rm -rf ~/.claude/projects
+mv ~/.claude/projects.backup ~/.claude/projects
 ```
 
-## 8. Basic Dev Checks
+## 7. Receive From Random Folder
 
-Run these after code changes:
+Run receive away from the repo:
+
+```bash
+cd ~
+node ~/Desktop/side-projects/claude-context-sync/bin/claudesync.js receive --gist <gistId>
+```
+
+Expected:
+
+```text
+It should find the matching repo by Git remote URL.
+```
+
+If it cannot find the repo automatically:
+
+```bash
+node ~/Desktop/side-projects/claude-context-sync/bin/claudesync.js receive --gist <gistId> --cwd ~/Desktop/side-projects/claude-context-sync
+```
+
+## 8. Basic Checks After Code Changes
 
 ```bash
 npm.cmd run build
@@ -148,8 +154,10 @@ Fix: Run: npx claude-context-sync@latest receive --gist <gistId>
 
 ## Notes
 
-- Use `node bin/claudesync.js` during development.
-- Use `npx claude-context-sync@latest` only after publishing.
-- `send` must be run from inside a git repo with a remote.
-- `receive` matches repos by Git remote URL, not by folder path.
-- Existing Claude sessions are never overwritten.
+```text
+Use node bin/claudesync.js during development.
+Use npx claude-context-sync@latest only after publishing.
+send must run inside a git repo with a remote.
+receive matches repos by Git remote URL, not folder path.
+Existing Claude sessions are never overwritten.
+```
