@@ -12,7 +12,7 @@ npm.cmd run build
 ## 2. Check CLI
 
 ```bash
-node bin/claudesync.js --help
+node bin/sync-ai-sessions.js --help
 ```
 
 Expected:
@@ -37,13 +37,26 @@ For this package repo:
 
 ```bash
 cd /path/to/sync-ai-sessions
-node bin/claudesync.js send
+node bin/sync-ai-sessions.js send
 ```
 
-You can also be explicit:
+It should show:
+
+```text
+Sync AI Sessions
+Session source
+
+  Claude Code   Supported
+  Codex CLI     Not supported yet
+
+Using Claude Code for this handoff.
+Tip: use --tool claude to skip this screen in scripts.
+```
+
+Claude Code is used automatically. You can also be explicit:
 
 ```bash
-node bin/claudesync.js send --tool claude
+node bin/sync-ai-sessions.js send --tool claude
 ```
 
 Enter a passphrase.
@@ -51,9 +64,10 @@ Enter a passphrase.
 Expected:
 
 ```text
-Sent Claude handoff
-Gist: <gistId>
+Handoff sent
+Tool: Claude Code
 Repo: github.com/<owner>/<repo>
+Gist: <gistId>
 ```
 
 Keep the Gist ID.
@@ -63,7 +77,7 @@ Keep the Gist ID.
 Run from the same repo:
 
 ```bash
-node bin/claudesync.js receive --gist <gistId>
+node bin/sync-ai-sessions.js receive --gist <gistId>
 ```
 
 Enter the same passphrase.
@@ -71,7 +85,8 @@ Enter the same passphrase.
 Expected:
 
 ```text
-Received Claude handoff
+Handoff received
+Tool: Claude Code
 Imported: ...
 Destination: <this repo path>
 ```
@@ -100,7 +115,7 @@ cd /path/to/sync-ai-sessions
 Send a fresh handoff:
 
 ```bash
-node bin/claudesync.js send
+node bin/sync-ai-sessions.js send
 ```
 
 Copy the printed Gist ID.
@@ -120,7 +135,7 @@ rm -rf ~/.claude/projects
 Pull sessions back from the Gist:
 
 ```bash
-node bin/claudesync.js receive --gist <gistId>
+node bin/sync-ai-sessions.js receive --gist <gistId>
 ```
 
 Enter the same passphrase used during `send`.
@@ -150,7 +165,7 @@ Run receive away from the repo:
 
 ```bash
 cd ~
-node /path/to/sync-ai-sessions/bin/claudesync.js receive --gist <gistId>
+node /path/to/sync-ai-sessions/bin/sync-ai-sessions.js receive --gist <gistId>
 ```
 
 Expected:
@@ -162,36 +177,41 @@ It should find the matching repo by Git remote URL.
 If it cannot find the repo automatically:
 
 ```bash
-node /path/to/sync-ai-sessions/bin/claudesync.js receive --gist <gistId> --cwd /path/to/sync-ai-sessions
+node /path/to/sync-ai-sessions/bin/sync-ai-sessions.js receive --gist <gistId> --cwd /path/to/sync-ai-sessions
 ```
 
 ## 8. Basic Checks After Code Changes
 
 ```bash
 npm.cmd run build
-node bin/claudesync.js --help
-node bin/claudesync.js receive
-node bin/claudesync.js send --tool codex
+node bin/sync-ai-sessions.js --help
+node bin/sync-ai-sessions.js receive
+node bin/sync-ai-sessions.js send --tool codex
+node bin/sync-ai-sessions.js send --tool claude
 ```
 
 Expected missing Gist error:
 
 ```text
-Failed: Missing Gist ID.
-Fix: Run: npx sync-ai-sessions@latest receive --gist <gistId>
+Sync AI Sessions could not continue
+
+Reason: No Gist ID was provided.
+Next: Run: npx sync-ai-sessions@latest receive --gist <gistId>
 ```
 
 Expected Codex coming-soon error:
 
 ```text
-Failed: Codex CLI sessions are not supported yet.
-Fix: Use --tool claude for now. Codex support is planned for a future Sync AI Sessions release.
+Sync AI Sessions could not continue
+
+Reason: Codex CLI sessions are not supported yet.
+Next: Use --tool claude for now. Codex support is planned for a future Sync AI Sessions release.
 ```
 
 ## Notes
 
 ```text
-Use node bin/claudesync.js during development.
+Use node bin/sync-ai-sessions.js during development.
 Use npx sync-ai-sessions@latest only after publishing.
 send must run inside a git repo with a remote.
 receive matches repos by Git remote URL, not folder path.

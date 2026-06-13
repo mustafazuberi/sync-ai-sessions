@@ -22,7 +22,7 @@ export async function createHandoffGist(token: string, content: string, descript
   });
 
   if (!response.ok) {
-    throw new FriendlyError("Could not create private Gist.", "Run: gh auth refresh -s gist");
+    throw new FriendlyError("GitHub could not create the private Gist.", "Run: gh auth refresh -s gist, then retry.");
   }
 
   const gist = (await response.json()) as { id: string; html_url: string };
@@ -35,13 +35,16 @@ export async function getHandoffPayload(token: string, gistId: string): Promise<
   });
 
   if (!response.ok) {
-    throw new FriendlyError(`Could not read Gist ${gistId}.`, "Check the Gist ID or run: gh auth refresh -s gist");
+    throw new FriendlyError(
+      `This Gist could not be opened: ${gistId}.`,
+      "Check the Gist ID, GitHub account, or run: gh auth refresh -s gist.",
+    );
   }
 
   const gist = (await response.json()) as { files?: Record<string, { content?: string; raw_url?: string }> };
   const file = gist.files?.[fileName];
   if (!file) {
-    throw new FriendlyError("This Gist is not a Sync AI Sessions handoff.", `Expected file: ${fileName}`);
+    throw new FriendlyError("This Gist is not a Sync AI Sessions handoff.", "Use a Gist created by sync-ai-sessions send.");
   }
 
   if (file.content) return file.content;
@@ -50,7 +53,7 @@ export async function getHandoffPayload(token: string, gistId: string): Promise<
     if (raw.ok) return raw.text();
   }
 
-  throw new FriendlyError("Could not download handoff payload.", "Rerun receive with --debug");
+  throw new FriendlyError("The encrypted handoff file could not be downloaded.", "Rerun receive with --debug for details.");
 }
 
 function headers(token: string): Record<string, string> {

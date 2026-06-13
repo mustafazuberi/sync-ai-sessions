@@ -35,12 +35,15 @@ export type SnapshotMetadata = {
 
 export async function createSnapshot(projectSessionDir: string, metadata: SnapshotMetadata): Promise<Buffer> {
   if (!existsSync(projectSessionDir)) {
-    throw new FriendlyError("No Claude sessions found for this project.", `Check: ${projectSessionDir}`);
+    throw new FriendlyError(
+      "No Claude Code sessions were found for this repo.",
+      "Open Claude Code in this repo once, then rerun send.",
+    );
   }
 
   const files = await collectFiles(projectSessionDir, projectSessionDir);
   if (files.length === 0) {
-    throw new FriendlyError("No Claude session files found.", "Open Claude Code once, then rerun send.");
+    throw new FriendlyError("No Claude Code session files were found.", "Open Claude Code in this repo once, then rerun send.");
   }
 
   const snapshot: Snapshot = {
@@ -93,7 +96,7 @@ export async function mergeSnapshot(snapshot: Snapshot, targetDir: string): Prom
     for (const stagedFile of stagedFiles) {
       await mkdir(path.dirname(stagedFile.destinationPath), { recursive: true });
       if (existsSync(stagedFile.destinationPath)) {
-        throw new FriendlyError("Import destination changed during receive.", "Close Claude Code and rerun receive.");
+        throw new FriendlyError("The Claude session folder changed during receive.", "Close Claude Code and rerun receive.");
       }
     }
 

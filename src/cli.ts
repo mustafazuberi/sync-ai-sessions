@@ -23,7 +23,7 @@ async function main() {
 }
 
 function printHelp() {
-  console.log(`Sync AI Sessions\n\nUsage:\n  sync-ai-sessions install [--tool claude]\n  sync-ai-sessions send [--tool claude] [--copy]\n  sync-ai-sessions receive --gist <gistId> [--tool claude]\n  sync-ai-sessions doctor [--tool claude]\n\nAlias:\n  aisessions send\n\nTools:\n  claude    Claude Code sessions\n  codex     coming soon\n\nOptions:\n  --cwd <path>    Resolve paths from another folder\n  --json          Print machine-readable output\n  --debug         Show technical errors`);
+  console.log(`Sync AI Sessions\n\nUsage:\n  sync-ai-sessions install [--tool claude]\n  sync-ai-sessions send [--tool claude] [--copy]\n  sync-ai-sessions receive --gist <gistId> [--tool claude]\n  sync-ai-sessions doctor [--tool claude]\n\nAlias:\n  aisessions send\n\nTools:\n  claude    Supported\n  codex     Not supported yet\n\nOptions:\n  --cwd <path>    Resolve paths from another folder\n  --json          Print machine-readable output\n  --debug         Show technical errors`);
 }
 
 main().catch((error: unknown) => {

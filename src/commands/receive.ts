@@ -9,13 +9,13 @@ import { resolveGitHubToken } from "../core/github-token.js";
 import { resolvePaths } from "../core/paths.js";
 import { askPassphrase } from "../core/prompt.js";
 import { mergeSnapshot, readSnapshot } from "../core/snapshot.js";
-import { printResult } from "../core/output.js";
+import { formatNotice, formatSuccess, printResult } from "../core/output.js";
 import { resolveTool, toolDisplayName } from "../core/tools.js";
 
 export async function receiveCommand(args: CliArgs): Promise<void> {
-  const tool = resolveTool(args);
+  const tool = await resolveTool(args);
   const gistId = getFlag(args, "gist") ?? args.positionals[0];
-  if (!gistId) throw new FriendlyError("Missing Gist ID.", "Run: npx sync-ai-sessions@latest receive --gist <gistId>");
+  if (!gistId) throw new FriendlyError("No Gist ID was provided.", "Run: npx sync-ai-sessions@latest receive --gist <gistId>");
 
   const paths = await resolvePaths(args);
   const token = resolveGitHubToken();
@@ -27,18 +27,19 @@ export async function receiveCommand(args: CliArgs): Promise<void> {
 
   printResult(
     args,
-    [
-      "Received Claude Code session handoff",
-      `Tool: ${toolDisplayName(tool)}`,
-      `Gist: ${gistId}`,
-      `Imported: ${result.added}`,
-      `Renamed: ${result.renamed}`,
-      `Skipped: ${result.skipped}`,
-      `Destination: ${target.label}`,
-      target.note,
-      "",
-      "Next: open Claude Code and resume imported session",
-    ].filter(Boolean).join("\n"),
+    formatSuccess(
+      "Handoff received",
+      [
+        { label: "Tool", value: toolDisplayName(tool) },
+        { label: "Gist", value: gistId },
+        { label: "Imported", value: result.added },
+        { label: "Renamed", value: result.renamed },
+        { label: "Skipped", value: result.skipped },
+        { label: "Destination", value: target.label },
+        { label: "Note", value: target.note },
+      ],
+      "Open Claude Code and resume the imported session.",
+    ),
     {
       ok: true,
       command: "receive",
@@ -58,7 +59,7 @@ async function resolveImportTarget(
   gistId: string,
 ): Promise<{ dir: string; label: string; type: "cwd" | "matched-repo"; note?: string }> {
   if (!normalizedRemote) {
-    throw new FriendlyError("This handoff is missing repo identity.", "Create a new handoff from inside a git repo.");
+    throw new FriendlyError("This handoff does not include repo identity.", "Create a new handoff from inside a git repo.");
   }
 
   const explicitCwd = getFlag(args, "cwd");
@@ -67,7 +68,7 @@ async function resolveImportTarget(
     const explicitRepo = getGitIdentity(cwd);
     if (!explicitRepo?.normalizedRemotes.includes(normalizedRemote)) {
       throw new FriendlyError(
-        "The --cwd repo does not match this handoff.",
+        "The selected repo does not match this handoff.",
         `Use the repo for ${normalizedRemote}, or rerun without --cwd to search automatically.`,
       );
     }
@@ -87,13 +88,13 @@ async function resolveImportTarget(
 
   if (matches.length > 1) {
     throw new FriendlyError(
-      "Multiple local repos match this handoff.",
+      "More than one local repo matches this handoff.",
       `Rerun with: npx sync-ai-sessions@latest receive --gist ${gistId} --cwd <repo-path>`,
     );
   }
 
   throw new FriendlyError(
-    `No local repo found for ${normalizedRemote}.`,
+    `No local repo matched this handoff: ${normalizedRemote}.`,
     `Clone the repo, then rerun: npx sync-ai-sessions@latest receive --gist ${gistId} --cwd <repo-path>`,
   );
 }
@@ -103,8 +104,21 @@ async function decryptWithRetry(payload: string) {
     return await decryptBytes(payload, await askPassphrase());
   } catch (error) {
     if (!(error instanceof FriendlyError)) throw error;
-    console.error("Failed: Could not decrypt handoff.");
-    console.error("Retry: enter the passphrase again.");
-    return decryptBytes(payload, await askPassphrase());
+    console.error(
+      formatNotice(
+        "Passphrase did not unlock this handoff",
+        ["Decryption failed, so nothing was imported.", "Try the passphrase used during send."],
+        "Enter the passphrase again.",
+      ),
+    );
+    console.error("");
+    try {
+      return await decryptBytes(payload, await askPassphrase("Passphrase"));
+    } catch {
+      throw new FriendlyError(
+        "The handoff could not be received because the passphrase is incorrect.",
+        "Run receive again with the exact passphrase used during send.",
+      );
+    }
   }
 }

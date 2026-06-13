@@ -4,8 +4,8 @@
   "description": "Encrypted AI coding session handoff across devices. Currently supports Claude Code.",
   "type": "module",
   "bin": {
-    "sync-ai-sessions": "bin/claudesync.js",
-    "aisessions": "bin/claudesync.js"
+    "sync-ai-sessions": "bin/sync-ai-sessions.js",
+    "aisessions": "bin/sync-ai-sessions.js"
   },
   "files": [
     "bin",

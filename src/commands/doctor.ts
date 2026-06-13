@@ -3,11 +3,11 @@ import { type CliArgs } from "../core/args.js";
 import { readConfig } from "../core/config.js";
 import { resolveGitHubToken } from "../core/github-token.js";
 import { resolvePaths } from "../core/paths.js";
-import { printResult } from "../core/output.js";
+import { formatSuccess, printResult } from "../core/output.js";
 import { resolveTool, toolDisplayName } from "../core/tools.js";
 
 export async function doctorCommand(args: CliArgs): Promise<void> {
-  const tool = resolveTool(args);
+  const tool = await resolveTool(args);
   const paths = await resolvePaths(args);
   const config = await readConfig(paths.configPath);
   const auth = checkAuth();
@@ -15,16 +15,15 @@ export async function doctorCommand(args: CliArgs): Promise<void> {
 
   printResult(
     args,
-    [
-      "Sync AI Sessions doctor",
-      `Tool: ${toolDisplayName(tool)}`,
-      `GitHub: ${auth ? "OK" : "WARN - run gh auth login"}`,
-      `Sessions: ${sessionExists ? "OK" : "WARN - not found"}`,
-      `Path: ${paths.sessionDir}`,
-      `Reason: ${paths.sessionReason}`,
-      `Config: ${existsSync(paths.configPath) ? "OK" : "WARN - run install"}`,
-      `Installed: ${config.installedAt ?? "not installed"}`,
-    ].join("\n"),
+    formatSuccess("Doctor report", [
+      { label: "Tool", value: toolDisplayName(tool) },
+      { label: "GitHub", value: auth ? "connected" : "needs gh auth login" },
+      { label: "Sessions", value: sessionExists ? "found" : "not found" },
+      { label: "Path", value: paths.sessionDir },
+      { label: "Reason", value: paths.sessionReason },
+      { label: "Config", value: existsSync(paths.configPath) ? "found" : "run install" },
+      { label: "Installed", value: config.installedAt ?? "not installed" },
+    ]),
     {
       ok: auth && sessionExists,
       command: "doctor",

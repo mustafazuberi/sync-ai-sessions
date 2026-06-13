@@ -22,7 +22,10 @@ export async function resolvePaths(args: CliArgs): Promise<ResolvedPaths> {
     await mkdir(homeDir, { recursive: true });
     await mkdir(path.join(homeDir, "backups"), { recursive: true });
   } catch {
-    throw new FriendlyError(`Cannot write Sync AI Sessions config at ${homeDir}.`, "Check folder permissions and rerun.");
+    throw new FriendlyError(
+      "Sync AI Sessions cannot write its local config folder.",
+      `Check permissions for ${homeDir}, then retry.`,
+    );
   }
   const session = await resolveSessionDir(path.join(homeDir, "config.json"));
 

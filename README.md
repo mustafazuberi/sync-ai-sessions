@@ -7,8 +7,8 @@ Sync AI Sessions currently supports **Claude Code sessions**.
 Tool support:
 
 ```text
-Claude Code: supported
-Codex CLI:   coming in a future version
+Claude Code: Supported
+Codex CLI:   Not supported yet
 ```
 
 ## What It Does Today
@@ -26,11 +26,26 @@ npx sync-ai-sessions@latest send
 npx sync-ai-sessions@latest receive --gist <gistId>
 ```
 
-Optional explicit tool selection:
+If you do not pass `--tool`, Sync AI Sessions shows the available session sources:
+
+```text
+Sync AI Sessions
+Session source
+
+  Claude Code   Supported
+  Codex CLI     Not supported yet
+
+Using Claude Code for this handoff.
+Tip: use --tool claude to skip this screen in scripts.
+```
+
+You can pass Claude explicitly for scripts:
 
 ```bash
 npx sync-ai-sessions@latest send --tool claude
 ```
+
+Passing `--tool codex` shows a coming-soon message.
 
 ## Requirements
 
@@ -69,15 +84,15 @@ Every `send` creates a separate private Gist. The Gist contains one encrypted fi
 Example output:
 
 ```text
-Sent Claude Code session handoff
+Handoff sent
+
+Tool: Claude Code
+Repo: github.com/owner/my-app
 Gist: abc123
 URL: https://gist.github.com/...
-Repo: github.com/owner/my-app
 
-On the other device:
+Next:
 npx sync-ai-sessions@latest receive --gist abc123
-
-Keep the passphrase private.
 ```
 
 ## Receive On Device B
@@ -146,6 +161,8 @@ gh auth login
 gh auth refresh -s gist
 ```
 
+If receive cannot open a Gist, confirm you are logged into the GitHub account that owns or can access that private Gist.
+
 ### No Claude sessions found
 
 Open Claude Code once in the git repo you want to move, then rerun:
@@ -163,15 +180,19 @@ Clone the repo, then rerun receive with an explicit target:
 npx sync-ai-sessions@latest receive --gist <gistId> --cwd /path/to/repo
 ```
 
+### Wrong passphrase
+
+The passphrase is never uploaded or saved. If receive says the handoff could not be decrypted, rerun receive and enter the exact passphrase used during send.
+
 ## Development
 
 ```bash
 npm install
 npm run build
-node bin/claudesync.js --help
+node bin/sync-ai-sessions.js --help
 ```
 
-Use `node bin/claudesync.js` while developing. Use `npx sync-ai-sessions@latest` only after publishing.
+Use `node bin/sync-ai-sessions.js` while developing. Use `npx sync-ai-sessions@latest` only after publishing.
 
 ## Publish Checklist
 

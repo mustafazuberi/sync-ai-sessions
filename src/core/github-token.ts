@@ -11,6 +11,6 @@ export function resolveGitHubToken(): string {
     if (!token) throw new Error("empty token");
     return token;
   } catch {
-    throw new FriendlyError("GitHub CLI login required.", "Run: gh auth login");
+    throw new FriendlyError("GitHub CLI is not authenticated.", "Run: gh auth login, then gh auth refresh -s gist.");
   }
 }

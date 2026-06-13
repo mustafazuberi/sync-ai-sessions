@@ -4,12 +4,12 @@ import { readConfig, writeConfig } from "../core/config.js";
 import { resolveGitHubToken } from "../core/github-token.js";
 import { resolvePaths } from "../core/paths.js";
 import { askConfirmedPassphrase } from "../core/prompt.js";
-import { printResult } from "../core/output.js";
+import { formatSuccess, printResult } from "../core/output.js";
 import type { CliArgs } from "../core/args.js";
 import { resolveTool, toolDisplayName } from "../core/tools.js";
 
 export async function installCommand(args: CliArgs): Promise<void> {
-  const tool = resolveTool(args);
+  const tool = await resolveTool(args);
   const paths = await resolvePaths(args);
   resolveGitHubToken();
   const passphrase = await askConfirmedPassphrase();
@@ -28,16 +28,16 @@ export async function installCommand(args: CliArgs): Promise<void> {
 
   printResult(
     args,
-    [
-      "Installed Sync AI Sessions",
-      `Tool: ${toolDisplayName(tool)}`,
-      "GitHub: OK",
-      `Sessions: ${paths.sessionDir}`,
-      `Config: ${paths.configPath}`,
-      "",
-      "Next:",
+    formatSuccess(
+      "Sync AI Sessions installed",
+      [
+        { label: "Tool", value: toolDisplayName(tool) },
+        { label: "GitHub", value: "connected" },
+        { label: "Sessions", value: paths.sessionDir },
+        { label: "Config", value: paths.configPath },
+      ],
       "npx sync-ai-sessions@latest send",
-    ].join("\n"),
+    ),
     {
       ok: true,
       command: "install",

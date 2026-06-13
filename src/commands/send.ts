@@ -11,23 +11,23 @@ import { resolveGitHubToken } from "../core/github-token.js";
 import { resolvePaths } from "../core/paths.js";
 import { askPassphrase } from "../core/prompt.js";
 import { createSnapshot } from "../core/snapshot.js";
-import { printResult } from "../core/output.js";
+import { formatSuccess, printResult } from "../core/output.js";
 import { resolveTool, toolDisplayName } from "../core/tools.js";
 
 export async function sendCommand(args: CliArgs): Promise<void> {
-  const tool = resolveTool(args);
+  const tool = await resolveTool(args);
   const paths = await resolvePaths(args);
   const git = getGitIdentity(paths.cwd);
   if (!git) {
     throw new FriendlyError(
-      "No git repo found.",
+      "This folder is not a git repo.",
       "Run this command from inside the repo you want to move, or pass --cwd <repo-path>.",
     );
   }
 
   const repoRemote = git.normalizedRemotes[0];
   if (!repoRemote) {
-    throw new FriendlyError("No git remote found for this repo.", "Add a remote or run from a repo with a GitHub remote.");
+    throw new FriendlyError("This repo has no Git remote.", "Add a GitHub remote, then rerun send.");
   }
 
   const token = resolveGitHubToken();
@@ -62,18 +62,16 @@ export async function sendCommand(args: CliArgs): Promise<void> {
 
   printResult(
     args,
-    [
-      "Sent Claude Code session handoff",
-      `Tool: ${toolDisplayName(tool)}`,
-      `Gist: ${gist.id}`,
-      copied ? "Clipboard: receive command copied" : `URL: ${gist.url}`,
-      `Repo: ${repoRemote}`,
-      "",
-      "On the other device:",
+    formatSuccess(
+      "Handoff sent",
+      [
+        { label: "Tool", value: toolDisplayName(tool) },
+        { label: "Repo", value: repoRemote },
+        { label: "Gist", value: gist.id },
+        { label: copied ? "Clipboard" : "URL", value: copied ? "receive command copied" : gist.url },
+      ],
       receiveCommand,
-      "",
-      "Keep the passphrase private.",
-    ].join("\n"),
+    ),
     {
       ok: true,
       command: "send",

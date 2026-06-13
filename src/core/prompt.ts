@@ -5,14 +5,14 @@ import { FriendlyError } from "./errors.js";
 export async function askPassphrase(label = "Passphrase"): Promise<string> {
   if (process.stdin.isTTY) {
     const value = await askHidden(label);
-    if (!value) throw new FriendlyError("Passphrase is required.", "Rerun the command and enter a passphrase.");
+    if (!value) throw new FriendlyError("A passphrase is required.", "Rerun the command and enter a passphrase.");
     return value;
   }
 
   const rl = readline.createInterface({ input, output });
   try {
     const value = await rl.question(`${label}: `);
-    if (!value) throw new FriendlyError("Passphrase is required.", "Rerun the command and enter a passphrase.");
+    if (!value) throw new FriendlyError("A passphrase is required.", "Rerun the command and enter a passphrase.");
     return value;
   } finally {
     rl.close();
@@ -22,7 +22,7 @@ export async function askPassphrase(label = "Passphrase"): Promise<string> {
 export async function askConfirmedPassphrase(): Promise<string> {
   const first = await askPassphrase("Create passphrase");
   const second = await askPassphrase("Confirm passphrase");
-  if (first !== second) throw new FriendlyError("Passphrases did not match.", "Rerun: npx sync-ai-sessions@latest install");
+  if (first !== second) throw new FriendlyError("The passphrases did not match.", "Rerun: npx sync-ai-sessions@latest install");
   return first;
 }
 
@@ -49,11 +49,15 @@ function askHidden(label: string): Promise<string> {
       }
 
       if (char === "\u007f" || char === "\b") {
-        value = value.slice(0, -1);
+        if (value.length > 0) {
+          value = value.slice(0, -1);
+          process.stdout.write("\b \b");
+        }
         return;
       }
 
       value += char;
+      process.stdout.write("•");
     };
 
     const cleanup = () => {

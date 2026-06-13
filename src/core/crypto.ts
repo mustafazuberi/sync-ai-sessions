@@ -44,6 +44,9 @@ export async function decryptBytes(encoded: string, passphrase: string): Promise
     const bytes = Buffer.concat([decipher.update(Buffer.from(payload.ciphertext, "base64")), decipher.final()]);
     return { bytes, meta: payload.meta ?? {} };
   } catch {
-    throw new FriendlyError("Could not decrypt handoff.", "Check the passphrase and try again.");
+    throw new FriendlyError(
+      "The passphrase did not unlock this handoff.",
+      "Enter the exact passphrase used during send.",
+    );
   }
 }

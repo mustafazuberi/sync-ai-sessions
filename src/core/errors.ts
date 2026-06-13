@@ -10,12 +10,14 @@ export class FriendlyError extends Error {
 export function formatError(error: unknown): string {
   const debug = process.argv.includes("--debug");
   if (error instanceof FriendlyError) {
-    return [`Failed: ${error.message}`, error.fix ? `Fix: ${error.fix}` : undefined].filter(Boolean).join("\n");
+    const lines = ["Sync AI Sessions could not continue", "", `Reason: ${error.message}`];
+    if (error.fix) lines.push(`Next: ${error.fix}`);
+    return lines.join("\n");
   }
 
   if (debug && error instanceof Error) {
     return error.stack ?? error.message;
   }
 
-  return "Failed: Something went wrong.\nFix: rerun with --debug";
+  return "Sync AI Sessions could not continue\n\nReason: Something went wrong.\nNext: rerun with --debug";
 }
