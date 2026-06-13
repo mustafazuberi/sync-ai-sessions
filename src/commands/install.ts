@@ -6,13 +6,15 @@ import { resolvePaths } from "../core/paths.js";
 import { askConfirmedPassphrase } from "../core/prompt.js";
 import { printResult } from "../core/output.js";
 import type { CliArgs } from "../core/args.js";
+import { resolveTool, toolDisplayName } from "../core/tools.js";
 
 export async function installCommand(args: CliArgs): Promise<void> {
+  const tool = resolveTool(args);
   const paths = await resolvePaths(args);
   resolveGitHubToken();
   const passphrase = await askConfirmedPassphrase();
   const config = await readConfig(paths.configPath);
-  const verifier = await encryptBytes(Buffer.from("claude-context-sync", "utf8"), passphrase, {
+  const verifier = await encryptBytes(Buffer.from("sync-ai-sessions", "utf8"), passphrase, {
     createdAt: Date.now(),
   });
 
@@ -27,17 +29,19 @@ export async function installCommand(args: CliArgs): Promise<void> {
   printResult(
     args,
     [
-      "Installed Claude Context Sync",
+      "Installed Sync AI Sessions",
+      `Tool: ${toolDisplayName(tool)}`,
       "GitHub: OK",
       `Sessions: ${paths.sessionDir}`,
       `Config: ${paths.configPath}`,
       "",
       "Next:",
-      "npx claude-context-sync@latest send",
+      "npx sync-ai-sessions@latest send",
     ].join("\n"),
     {
       ok: true,
       command: "install",
+      tool,
       host: os.hostname(),
       sessionDir: paths.sessionDir,
       configPath: paths.configPath,

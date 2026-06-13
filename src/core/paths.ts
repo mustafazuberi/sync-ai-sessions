@@ -16,13 +16,13 @@ export type ResolvedPaths = {
 };
 
 export async function resolvePaths(args: CliArgs): Promise<ResolvedPaths> {
-  const homeDir = path.join(os.homedir(), ".claude-context-sync");
+  const homeDir = path.join(os.homedir(), ".sync-ai-sessions");
   const cwd = path.resolve(getFlag(args, "cwd") ?? process.cwd());
   try {
     await mkdir(homeDir, { recursive: true });
     await mkdir(path.join(homeDir, "backups"), { recursive: true });
   } catch {
-    throw new FriendlyError(`Cannot write Claude Context Sync config at ${homeDir}.`, "Check folder permissions and rerun.");
+    throw new FriendlyError(`Cannot write Sync AI Sessions config at ${homeDir}.`, "Check folder permissions and rerun.");
   }
   const session = await resolveSessionDir(path.join(homeDir, "config.json"));
 
@@ -43,7 +43,7 @@ async function resolveSessionDir(configPath: string): Promise<{ path: string; re
 
   const configSessionDir = await readConfigSessionDir(configPath);
   if (configSessionDir) {
-    return { path: path.resolve(configSessionDir), reason: "Claude Context Sync config" };
+    return { path: path.resolve(configSessionDir), reason: "Sync AI Sessions config" };
   }
 
   const home = os.homedir();

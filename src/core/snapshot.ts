@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { existsSync } from "node:fs";
-import { mkdir, readFile, readdir, stat, writeFile } from "node:fs/promises";
+import { copyFile, mkdir, mkdtemp, readFile, readdir, rm, stat, writeFile } from "node:fs/promises";
+import os from "node:os";
 import path from "node:path";
 import { gzip, gunzip } from "node:zlib";
 import { promisify } from "node:util";
@@ -62,26 +63,45 @@ export async function mergeSnapshot(snapshot: Snapshot, targetDir: string): Prom
   let added = 0;
   let renamed = 0;
   let skipped = 0;
+  const stagedFiles: Array<{ stagedPath: string; destinationPath: string }> = [];
 
   await mkdir(targetDir, { recursive: true });
+  const stagingRoot = await mkdtemp(path.join(os.tmpdir(), "sync-ai-sessions-"));
 
-  for (const file of snapshot.files) {
-    const safeRelative = sanitizeRelativePath(file.path);
-    if (!safeRelative) {
-      skipped += 1;
-      continue;
+  try {
+    for (const file of snapshot.files) {
+      const safeRelative = sanitizeRelativePath(file.path);
+      if (!safeRelative) {
+        skipped += 1;
+        continue;
+      }
+
+      let destination = path.join(targetDir, safeRelative);
+      if (existsSync(destination)) {
+        destination = withImportedSuffix(destination, file.content);
+        renamed += 1;
+      } else {
+        added += 1;
+      }
+
+      const staged = path.join(stagingRoot, safeRelative);
+      await mkdir(path.dirname(staged), { recursive: true });
+      await writeFile(staged, Buffer.from(file.content, "base64"));
+      stagedFiles.push({ stagedPath: staged, destinationPath: destination });
     }
 
-    let destination = path.join(targetDir, safeRelative);
-    if (existsSync(destination)) {
-      destination = withImportedSuffix(destination, file.content);
-      renamed += 1;
-    } else {
-      added += 1;
+    for (const stagedFile of stagedFiles) {
+      await mkdir(path.dirname(stagedFile.destinationPath), { recursive: true });
+      if (existsSync(stagedFile.destinationPath)) {
+        throw new FriendlyError("Import destination changed during receive.", "Close Claude Code and rerun receive.");
+      }
     }
 
-    await mkdir(path.dirname(destination), { recursive: true });
-    await writeFile(destination, Buffer.from(file.content, "base64"));
+    for (const stagedFile of stagedFiles) {
+      await copyFile(stagedFile.stagedPath, stagedFile.destinationPath);
+    }
+  } finally {
+    await rm(stagingRoot, { recursive: true, force: true });
   }
 
   return { added, renamed, skipped };

@@ -4,8 +4,10 @@ import { readConfig } from "../core/config.js";
 import { resolveGitHubToken } from "../core/github-token.js";
 import { resolvePaths } from "../core/paths.js";
 import { printResult } from "../core/output.js";
+import { resolveTool, toolDisplayName } from "../core/tools.js";
 
 export async function doctorCommand(args: CliArgs): Promise<void> {
+  const tool = resolveTool(args);
   const paths = await resolvePaths(args);
   const config = await readConfig(paths.configPath);
   const auth = checkAuth();
@@ -14,7 +16,8 @@ export async function doctorCommand(args: CliArgs): Promise<void> {
   printResult(
     args,
     [
-      "Claude Context Sync doctor",
+      "Sync AI Sessions doctor",
+      `Tool: ${toolDisplayName(tool)}`,
       `GitHub: ${auth ? "OK" : "WARN - run gh auth login"}`,
       `Sessions: ${sessionExists ? "OK" : "WARN - not found"}`,
       `Path: ${paths.sessionDir}`,
@@ -25,6 +28,7 @@ export async function doctorCommand(args: CliArgs): Promise<void> {
     {
       ok: auth && sessionExists,
       command: "doctor",
+      tool,
       github: auth,
       sessionExists,
       sessionDir: paths.sessionDir,

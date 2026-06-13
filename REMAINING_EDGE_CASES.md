@@ -1,70 +1,143 @@
 # Remaining Edge Cases
 
-These are the important cases not fully handled yet.
+These are the things we still need to improve.
 
-## Repo Matching
+## 1. Claude Code Is Running During Receive
+
+Problem:
 
 ```text
-Fork vs upstream:
-Device A may use a fork remote, while Device B uses the upstream remote.
-Current behavior: exact remote match only.
-Needed: allow user to attach with --cwd after showing a clear mismatch message.
+Claude Code may be reading or writing session files while we import.
 ```
 
-## Import Safety
+Current behavior:
 
 ```text
+We do not warn the user.
+```
+
+Recommended behavior:
+
+```text
+Before receive, warn:
+"Close Claude Code before importing sessions."
+```
+
+Why:
+
+```text
+This reduces the chance of file conflicts.
+```
+
+## 2. Source Branch Is Not Shown
+
+Problem:
+
+```text
+The handoff stores the branch from Device A, but receive does not show it.
+```
+
+Current behavior:
+
+```text
+Import works, but user does not know which branch the session came from.
+```
+
+Recommended behavior:
+
+```text
+Show source branch in receive output when available.
+```
+
+Example:
+
+```text
+Source branch: feature/login
+```
+
+## 3. Handoff Is Too Large
+
+Problem:
+
+```text
+Claude sessions may become large.
+GitHub Gist may reject a very large upload.
+```
+
+Current behavior:
+
+```text
+We do not check size before upload.
+```
+
+Recommended behavior:
+
+```text
+Check payload size before upload.
+If too large, fail with a clear message.
+```
+
+Why:
+
+```text
+The user should get a clear reason before upload fails.
+```
+
+## 4. Wrong GitHub Account
+
+Problem:
+
+```text
+Device B may be logged into a different GitHub account than Device A.
+That account may not have access to the private Gist.
+```
+
+Current behavior:
+
+```text
+The error is not specific enough.
+```
+
+Recommended behavior:
+
+```text
+Say:
+"This GitHub account cannot access the Gist."
+```
+
+## 5. Gist Was Deleted
+
+Problem:
+
+```text
+The handoff Gist may have been deleted.
+```
+
+Current behavior:
+
+```text
+The error is not specific enough.
+```
+
+Recommended behavior:
+
+```text
+Say:
+"Handoff not found or deleted."
+```
+
+## Already Decided
+
+```text
+Different remote URL:
+Treat as different repo.
+
+Same normalized remote URL:
+Treat as same repo, even if local folder path is different.
+
+Remote name:
+Ignore it. Match by URL, not by names like origin/upstream.
+
 Partial import failure:
-Current behavior: writes files during import.
-Needed: stage files in temp first, then move into final location after validation.
-
-Claude Code running:
-Current behavior: receive does not warn.
-Needed: warn user to close Claude Code before modifying session files.
-```
-
-## Session Data
-
-```text
-Different branch:
-Current behavior: branch is stored but not shown.
-Needed: show source branch in receive output when available.
-
-Huge handoff:
-Current behavior: no size check before Gist upload.
-Needed: check payload size and fail with a clear message if too large.
-```
-
-## GitHub
-
-```text
-Wrong GitHub account:
-Current behavior: access failure is generic.
-Needed: say this GitHub account cannot access the Gist.
-
-Deleted Gist:
-Current behavior: not found looks like a generic read failure.
-Needed: say handoff not found or deleted.
-```
-
-## Already Handled
-
-```text
-Remote not named origin:
-Handled. We check all git remote URLs, not only origin.
-
-Repo paths differ across devices:
-Handled. We match by normalized Git remote URL.
-
-Multiple matching repos:
-Handled safely. We stop and suggest --cwd.
-
-Repo missing on Device B:
-Handled safely. We stop and tell user to clone repo or use --cwd.
-
-Same Gist received twice:
-Handled. Existing files are not overwritten; imported copies get a suffix.
-
-Claude storage path override:
-Handled. CLAUDESYNC_SESSION_DIR and doctor exist.
+Handled. We stage files in a temporary folder before moving them into Claude's real session folder.
 ```

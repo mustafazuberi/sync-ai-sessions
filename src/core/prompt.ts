@@ -22,7 +22,7 @@ export async function askPassphrase(label = "Passphrase"): Promise<string> {
 export async function askConfirmedPassphrase(): Promise<string> {
   const first = await askPassphrase("Create passphrase");
   const second = await askPassphrase("Confirm passphrase");
-  if (first !== second) throw new FriendlyError("Passphrases did not match.", "Rerun: npx claude-context-sync@latest install");
+  if (first !== second) throw new FriendlyError("Passphrases did not match.", "Rerun: npx sync-ai-sessions@latest install");
   return first;
 }
 

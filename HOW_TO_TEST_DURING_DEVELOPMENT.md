@@ -18,7 +18,7 @@ node bin/claudesync.js --help
 Expected:
 
 ```text
-Claude Context Sync
+Sync AI Sessions
 ```
 
 ## 3. GitHub Auth
@@ -36,8 +36,14 @@ Run from inside the repo you want to test.
 For this package repo:
 
 ```bash
-cd ~/Desktop/side-projects/claude-context-sync
+cd /path/to/sync-ai-sessions
 node bin/claudesync.js send
+```
+
+You can also be explicit:
+
+```bash
+node bin/claudesync.js send --tool claude
 ```
 
 Enter a passphrase.
@@ -79,13 +85,27 @@ Repo remote matching works.
 Session import works.
 ```
 
-## 6. Test Fresh Restore Locally
+## 6. Test Push, Delete, Pull Again
 
-Use this only if you are okay clearing local Claude sessions.
+Use this flow to confirm Sync AI Sessions can restore sessions after local Claude sessions are removed.
 
 Close Claude Code first.
 
-Backup real sessions:
+Start from this repo:
+
+```bash
+cd /path/to/sync-ai-sessions
+```
+
+Send a fresh handoff:
+
+```bash
+node bin/claudesync.js send
+```
+
+Copy the printed Gist ID.
+
+Backup current Claude sessions:
 
 ```bash
 cp -r ~/.claude/projects ~/.claude/projects.backup
@@ -97,16 +117,24 @@ Delete current sessions:
 rm -rf ~/.claude/projects
 ```
 
-Receive again:
+Pull sessions back from the Gist:
 
 ```bash
 node bin/claudesync.js receive --gist <gistId>
 ```
 
+Enter the same passphrase used during `send`.
+
 Check restored files:
 
 ```bash
 find ~/.claude/projects -type f
+```
+
+Expected:
+
+```text
+You should see Claude session files restored under ~/.claude/projects.
 ```
 
 Restore backup if needed:
@@ -122,7 +150,7 @@ Run receive away from the repo:
 
 ```bash
 cd ~
-node ~/Desktop/side-projects/claude-context-sync/bin/claudesync.js receive --gist <gistId>
+node /path/to/sync-ai-sessions/bin/claudesync.js receive --gist <gistId>
 ```
 
 Expected:
@@ -134,7 +162,7 @@ It should find the matching repo by Git remote URL.
 If it cannot find the repo automatically:
 
 ```bash
-node ~/Desktop/side-projects/claude-context-sync/bin/claudesync.js receive --gist <gistId> --cwd ~/Desktop/side-projects/claude-context-sync
+node /path/to/sync-ai-sessions/bin/claudesync.js receive --gist <gistId> --cwd /path/to/sync-ai-sessions
 ```
 
 ## 8. Basic Checks After Code Changes
@@ -143,20 +171,28 @@ node ~/Desktop/side-projects/claude-context-sync/bin/claudesync.js receive --gis
 npm.cmd run build
 node bin/claudesync.js --help
 node bin/claudesync.js receive
+node bin/claudesync.js send --tool codex
 ```
 
 Expected missing Gist error:
 
 ```text
 Failed: Missing Gist ID.
-Fix: Run: npx claude-context-sync@latest receive --gist <gistId>
+Fix: Run: npx sync-ai-sessions@latest receive --gist <gistId>
+```
+
+Expected Codex coming-soon error:
+
+```text
+Failed: Codex CLI sessions are not supported yet.
+Fix: Use --tool claude for now. Codex support is planned for a future Sync AI Sessions release.
 ```
 
 ## Notes
 
 ```text
 Use node bin/claudesync.js during development.
-Use npx claude-context-sync@latest only after publishing.
+Use npx sync-ai-sessions@latest only after publishing.
 send must run inside a git repo with a remote.
 receive matches repos by Git remote URL, not folder path.
 Existing Claude sessions are never overwritten.

@@ -41,7 +41,7 @@ export async function getHandoffPayload(token: string, gistId: string): Promise<
   const gist = (await response.json()) as { files?: Record<string, { content?: string; raw_url?: string }> };
   const file = gist.files?.[fileName];
   if (!file) {
-    throw new FriendlyError("This Gist is not a Claude Context Sync handoff.", `Expected file: ${fileName}`);
+    throw new FriendlyError("This Gist is not a Sync AI Sessions handoff.", `Expected file: ${fileName}`);
   }
 
   if (file.content) return file.content;
@@ -59,6 +59,6 @@ function headers(token: string): Record<string, string> {
     Accept: "application/vnd.github+json",
     "Content-Type": "application/json",
     "X-GitHub-Api-Version": "2022-11-28",
-    "User-Agent": "claude-context-sync",
+    "User-Agent": "sync-ai-sessions",
   };
 }

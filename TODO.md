@@ -69,6 +69,8 @@ Important:
 ```text
 send is repo-based in v1.
 It does not send every Claude session on the machine.
+The only supported tool adapter today is Claude Code.
+Codex CLI support is planned for a future release.
 ```
 
 ## Expected UX
@@ -77,7 +79,7 @@ Best case:
 
 ```bash
 cd my-app
-npx claude-context-sync@latest receive --gist <gistId>
+npx sync-ai-sessions@latest receive --gist <gistId>
 ```
 
 If the current repo remote matches the handoff, sessions attach to this repo.
@@ -85,7 +87,7 @@ If the current repo remote matches the handoff, sessions attach to this repo.
 Explicit target:
 
 ```bash
-npx claude-context-sync@latest receive --gist <gistId> --cwd /path/to/my-app
+npx sync-ai-sessions@latest receive --gist <gistId> --cwd /path/to/my-app
 ```
 
 If no matching repo exists:

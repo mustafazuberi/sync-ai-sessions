@@ -12,8 +12,10 @@ import { resolvePaths } from "../core/paths.js";
 import { askPassphrase } from "../core/prompt.js";
 import { createSnapshot } from "../core/snapshot.js";
 import { printResult } from "../core/output.js";
+import { resolveTool, toolDisplayName } from "../core/tools.js";
 
 export async function sendCommand(args: CliArgs): Promise<void> {
+  const tool = resolveTool(args);
   const paths = await resolvePaths(args);
   const git = getGitIdentity(paths.cwd);
   if (!git) {
@@ -53,15 +55,16 @@ export async function sendCommand(args: CliArgs): Promise<void> {
   const gist = await createHandoffGist(
     token,
     payload,
-    `claude-context-sync-handoff:${createdAt}:${os.hostname()}:${projectHint}`,
+    `sync-ai-sessions-handoff:${createdAt}:${os.hostname()}:${projectHint}`,
   );
-  const receiveCommand = `npx claude-context-sync@latest receive --gist ${gist.id}`;
+  const receiveCommand = `npx sync-ai-sessions@latest receive --gist ${gist.id}`;
   const copied = hasFlag(args, "copy") ? copyToClipboard(receiveCommand) : false;
 
   printResult(
     args,
     [
-      "Sent Claude handoff",
+      "Sent Claude Code session handoff",
+      `Tool: ${toolDisplayName(tool)}`,
       `Gist: ${gist.id}`,
       copied ? "Clipboard: receive command copied" : `URL: ${gist.url}`,
       `Repo: ${repoRemote}`,
@@ -74,6 +77,7 @@ export async function sendCommand(args: CliArgs): Promise<void> {
     {
       ok: true,
       command: "send",
+      tool,
       gistId: gist.id,
       url: gist.url,
       receiveCommand,

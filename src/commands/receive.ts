@@ -10,10 +10,12 @@ import { resolvePaths } from "../core/paths.js";
 import { askPassphrase } from "../core/prompt.js";
 import { mergeSnapshot, readSnapshot } from "../core/snapshot.js";
 import { printResult } from "../core/output.js";
+import { resolveTool, toolDisplayName } from "../core/tools.js";
 
 export async function receiveCommand(args: CliArgs): Promise<void> {
+  const tool = resolveTool(args);
   const gistId = getFlag(args, "gist") ?? args.positionals[0];
-  if (!gistId) throw new FriendlyError("Missing Gist ID.", "Run: npx claude-context-sync@latest receive --gist <gistId>");
+  if (!gistId) throw new FriendlyError("Missing Gist ID.", "Run: npx sync-ai-sessions@latest receive --gist <gistId>");
 
   const paths = await resolvePaths(args);
   const token = resolveGitHubToken();
@@ -26,7 +28,8 @@ export async function receiveCommand(args: CliArgs): Promise<void> {
   printResult(
     args,
     [
-      "Received Claude handoff",
+      "Received Claude Code session handoff",
+      `Tool: ${toolDisplayName(tool)}`,
       `Gist: ${gistId}`,
       `Imported: ${result.added}`,
       `Renamed: ${result.renamed}`,
@@ -39,6 +42,7 @@ export async function receiveCommand(args: CliArgs): Promise<void> {
     {
       ok: true,
       command: "receive",
+      tool,
       gistId,
       destination: target.dir,
       destinationType: target.type,
@@ -52,7 +56,7 @@ async function resolveImportTarget(
   paths: Awaited<ReturnType<typeof resolvePaths>>,
   normalizedRemote: string | undefined,
   gistId: string,
-): Promise<{ dir: string; label: string; type: "cwd" | "matched-repo" | "archive"; note?: string }> {
+): Promise<{ dir: string; label: string; type: "cwd" | "matched-repo"; note?: string }> {
   if (!normalizedRemote) {
     throw new FriendlyError("This handoff is missing repo identity.", "Create a new handoff from inside a git repo.");
   }
@@ -84,13 +88,13 @@ async function resolveImportTarget(
   if (matches.length > 1) {
     throw new FriendlyError(
       "Multiple local repos match this handoff.",
-      `Rerun with: npx claude-context-sync@latest receive --gist ${gistId} --cwd <repo-path>`,
+      `Rerun with: npx sync-ai-sessions@latest receive --gist ${gistId} --cwd <repo-path>`,
     );
   }
 
   throw new FriendlyError(
     `No local repo found for ${normalizedRemote}.`,
-    `Clone the repo, then rerun: npx claude-context-sync@latest receive --gist ${gistId} --cwd <repo-path>`,
+    `Clone the repo, then rerun: npx sync-ai-sessions@latest receive --gist ${gistId} --cwd <repo-path>`,
   );
 }
 
