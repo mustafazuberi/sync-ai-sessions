@@ -2,6 +2,25 @@
   "name": "sync-ai-sessions",
   "version": "0.1.0",
   "description": "Encrypted AI coding session handoff across devices. Claude Code supported today, Codex CLI planned.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mustafazuberi/sync-ai-sessions.git"
+  },
+  "bugs": {
+    "url": "https://github.com/mustafazuberi/sync-ai-sessions/issues"
+  },
+  "homepage": "https://github.com/mustafazuberi/sync-ai-sessions#readme",
+  "keywords": [
+    "ai",
+    "cli",
+    "sessions",
+    "sync",
+    "claude",
+    "claude-code",
+    "codex",
+    "developer-tools"
+  ],
   "type": "module",
   "bin": {
     "sync-ai-sessions": "bin/sync-ai-sessions.js",
