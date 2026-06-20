@@ -1,7 +1,7 @@
 {
   "name": "sync-ai-sessions",
   "version": "0.1.0",
-  "description": "Encrypted AI coding session handoff across devices. Currently supports Claude Code.",
+  "description": "Encrypted AI coding session handoff across devices. Claude Code supported today, Codex CLI planned.",
   "type": "module",
   "bin": {
     "sync-ai-sessions": "bin/sync-ai-sessions.js",

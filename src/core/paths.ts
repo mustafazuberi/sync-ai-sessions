@@ -40,8 +40,18 @@ export async function resolvePaths(args: CliArgs): Promise<ResolvedPaths> {
 }
 
 async function resolveSessionDir(configPath: string): Promise<{ path: string; reason: string }> {
+  if (process.env.SYNC_AI_SESSIONS_SESSION_DIR) {
+    return {
+      path: path.resolve(process.env.SYNC_AI_SESSIONS_SESSION_DIR),
+      reason: "SYNC_AI_SESSIONS_SESSION_DIR",
+    };
+  }
+
   if (process.env.CLAUDESYNC_SESSION_DIR) {
-    return { path: path.resolve(process.env.CLAUDESYNC_SESSION_DIR), reason: "CLAUDESYNC_SESSION_DIR" };
+    return {
+      path: path.resolve(process.env.CLAUDESYNC_SESSION_DIR),
+      reason: "CLAUDESYNC_SESSION_DIR",
+    };
   }
 
   const configSessionDir = await readConfigSessionDir(configPath);
