@@ -18,12 +18,14 @@ export async function receiveCommand(args: CliArgs): Promise<void> {
   if (!gistId) throw new FriendlyError("No Gist ID was provided.", "Run: npx sync-ai-sessions@latest receive --gist <gistId>");
 
   const paths = await resolvePaths(args);
+  warnBeforeImport(args);
   const token = resolveGitHubToken();
   const payload = await getHandoffPayload(token, gistId);
   const decrypted = await decryptWithRetry(payload);
   const snapshot = await readSnapshot(decrypted.bytes);
   const target = await resolveImportTarget(args, paths, snapshot.metadata.normalizedGitRemoteOrigin, gistId);
   const result = await mergeSnapshot(snapshot, target.dir);
+  const imported = result.added + result.renamed;
 
   printResult(
     args,
@@ -32,9 +34,10 @@ export async function receiveCommand(args: CliArgs): Promise<void> {
       [
         { label: "Tool", value: toolDisplayName(tool) },
         { label: "Gist", value: gistId },
-        { label: "Imported", value: result.added },
-        { label: "Renamed", value: result.renamed },
-        { label: "Skipped", value: result.skipped },
+        { label: "Imported", value: imported },
+        { label: "Saved as safe copy", value: formatPositiveCount(result.renamed) },
+        { label: "Skipped", value: formatPositiveCount(result.skipped) },
+        { label: "Source branch", value: snapshot.metadata.gitBranch },
         { label: "Destination", value: target.label },
         { label: "Note", value: target.note },
       ],
@@ -47,9 +50,35 @@ export async function receiveCommand(args: CliArgs): Promise<void> {
       gistId,
       destination: target.dir,
       destinationType: target.type,
+      sourceBranch: snapshot.metadata.gitBranch,
+      imported,
       ...result,
     },
   );
+}
+
+function formatPositiveCount(count: number): number | undefined {
+  if (count === 0) return undefined;
+  return count;
+}
+
+function warnBeforeImport(args: CliArgs): void {
+  if (args.flags.json) return;
+
+  const title = color("◇ Import safety", "yellow");
+  const body = color("  Close Claude Code before receiving sessions.\n  This helps avoid session file conflicts.", "dim");
+  console.error([title, "", body].join("\n"));
+  console.error("");
+}
+
+function color(text: string, tone: "yellow" | "dim"): string {
+  if (!process.stderr.isTTY) return text;
+  const codes = {
+    yellow: ["\x1b[33m", "\x1b[0m"],
+    dim: ["\x1b[2m", "\x1b[0m"],
+  };
+  const [start, end] = codes[tone];
+  return `${start}${text}${end}`;
 }
 
 async function resolveImportTarget(

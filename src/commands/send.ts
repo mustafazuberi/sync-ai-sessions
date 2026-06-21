@@ -14,6 +14,8 @@ import { createSnapshot } from "../core/snapshot.js";
 import { formatSuccess, printResult } from "../core/output.js";
 import { resolveTool, toolDisplayName } from "../core/tools.js";
 
+const maxGistPayloadBytes = 10 * 1024 * 1024;
+
 export async function sendCommand(args: CliArgs): Promise<void> {
   const tool = await resolveTool(args);
   const paths = await resolvePaths(args);
@@ -31,6 +33,7 @@ export async function sendCommand(args: CliArgs): Promise<void> {
   }
 
   const token = resolveGitHubToken();
+  explainPassphrase(args);
   const passphrase = await askPassphrase();
   const createdAt = new Date().toISOString();
   const sourceCwd = git.cwd;
@@ -51,6 +54,7 @@ export async function sendCommand(args: CliArgs): Promise<void> {
     projectHint,
     normalizedGitRemoteOrigin: repoRemote,
   });
+  assertPayloadSize(payload);
 
   const gist = await createHandoffGist(
     token,
@@ -83,4 +87,35 @@ export async function sendCommand(args: CliArgs): Promise<void> {
       repo: repoRemote,
     },
   );
+}
+
+function explainPassphrase(args: CliArgs): void {
+  if (args.flags.json) return;
+
+  console.error(color("◇ Choose a passphrase. You’ll need it on the other device.", "cyan"));
+  console.error("");
+}
+
+function assertPayloadSize(payload: string): void {
+  const payloadBytes = Buffer.byteLength(payload, "utf8");
+  if (payloadBytes <= maxGistPayloadBytes) return;
+
+  throw new FriendlyError(
+    `This handoff is ${formatBytes(payloadBytes)}, which is over the ${formatBytes(maxGistPayloadBytes)} safe upload limit.`,
+    "Open Claude Code in this repo and clear older session history, then send again.",
+  );
+}
+
+function formatBytes(bytes: number): string {
+  const mb = bytes / (1024 * 1024);
+  return `${mb.toFixed(1)} MB`;
+}
+
+function color(text: string, tone: "cyan"): string {
+  if (!process.stderr.isTTY) return text;
+  const codes = {
+    cyan: ["\x1b[36m", "\x1b[0m"],
+  };
+  const [start, end] = codes[tone];
+  return `${start}${text}${end}`;
 }

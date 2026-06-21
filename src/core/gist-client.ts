@@ -22,6 +22,13 @@ export async function createHandoffGist(token: string, content: string, descript
   });
 
   if (!response.ok) {
+    if (response.status === 413 || response.status === 422) {
+      throw new FriendlyError(
+        "GitHub rejected this handoff because it is too large.",
+        "Reduce older Claude session history for this repo, then send again.",
+      );
+    }
+
     throw new FriendlyError("GitHub could not create the private Gist.", "Run: gh auth refresh -s gist, then retry.");
   }
 
@@ -35,10 +42,7 @@ export async function getHandoffPayload(token: string, gistId: string): Promise<
   });
 
   if (!response.ok) {
-    throw new FriendlyError(
-      `This Gist could not be opened: ${gistId}.`,
-      "Check the Gist ID, GitHub account, or run: gh auth refresh -s gist.",
-    );
+    throw await gistAccessError(token, gistId, response.status);
   }
 
   const gist = (await response.json()) as { files?: Record<string, { content?: string; raw_url?: string }> };
@@ -54,6 +58,45 @@ export async function getHandoffPayload(token: string, gistId: string): Promise<
   }
 
   throw new FriendlyError("The encrypted handoff file could not be downloaded.", "Rerun receive with --debug for details.");
+}
+
+async function gistAccessError(token: string, gistId: string, status: number): Promise<FriendlyError> {
+  const login = await currentGitHubLogin(token);
+  const account = login ? `@${login}` : "the current GitHub account";
+
+  if (status === 401) {
+    return new FriendlyError("GitHub authentication expired.", "Run: gh auth login, then try receive again.");
+  }
+
+  if (status === 403) {
+    return new FriendlyError(
+      `${account} does not have permission to read Gists.`,
+      "Run: gh auth refresh -s gist, then try receive again.",
+    );
+  }
+
+  if (status === 404) {
+    return new FriendlyError(
+      `Handoff not found, deleted, or not accessible by ${account}.`,
+      "Check the Gist ID, switch to the GitHub account that created it, or create a new handoff.",
+    );
+  }
+
+  return new FriendlyError(
+    `GitHub could not open this Gist: ${gistId}.`,
+    "Check the Gist ID and rerun receive with --debug if it continues.",
+  );
+}
+
+async function currentGitHubLogin(token: string): Promise<string | undefined> {
+  try {
+    const response = await fetch(`${apiBase}/user`, { headers: headers(token) });
+    if (!response.ok) return undefined;
+    const user = (await response.json()) as { login?: string };
+    return user.login;
+  } catch {
+    return undefined;
+  }
 }
 
 function headers(token: string): Record<string, string> {
