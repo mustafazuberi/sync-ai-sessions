@@ -22,6 +22,13 @@ export async function createHandoffGist(token: string, content: string, descript
   });
 
   if (!response.ok) {
+    if (response.status === 413 || response.status === 422) {
+      throw new FriendlyError(
+        "GitHub rejected this handoff because it is too large.",
+        "Reduce older Claude session history for this repo, then send again.",
+      );
+    }
+
     throw new FriendlyError("GitHub could not create the private Gist.", "Run: gh auth refresh -s gist, then retry.");
   }
 
