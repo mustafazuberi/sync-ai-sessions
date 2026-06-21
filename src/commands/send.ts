@@ -31,6 +31,7 @@ export async function sendCommand(args: CliArgs): Promise<void> {
   }
 
   const token = resolveGitHubToken();
+  explainPassphrase(args);
   const passphrase = await askPassphrase();
   const createdAt = new Date().toISOString();
   const sourceCwd = git.cwd;
@@ -83,4 +84,20 @@ export async function sendCommand(args: CliArgs): Promise<void> {
       repo: repoRemote,
     },
   );
+}
+
+function explainPassphrase(args: CliArgs): void {
+  if (args.flags.json) return;
+
+  console.error(color("◇ Choose a passphrase. You’ll need it on the other device.", "cyan"));
+  console.error("");
+}
+
+function color(text: string, tone: "cyan"): string {
+  if (!process.stderr.isTTY) return text;
+  const codes = {
+    cyan: ["\x1b[36m", "\x1b[0m"],
+  };
+  const [start, end] = codes[tone];
+  return `${start}${text}${end}`;
 }
